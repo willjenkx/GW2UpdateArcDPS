@@ -1,28 +1,37 @@
 import json
 import os.path
-from os.path import exists
+from os.path import exists, expanduser
+
+roaming = expanduser("~") + "\\AppData\\Roaming\\Guild Wars 2"
+configPath = f'{roaming}\\arcdpsupdateconfig.json'
 
 
 def initconfig():
     defaults = {'gw2path': '', 'lastRun': ''}
-    if exists('./config.json'):
-        return print('config.json already exists, skipping')
+    if exists(configPath):
+        return print(f'{configPath} already exists, skipping')
 
-    open('config.json', 'x').close()
-    with open('config.json', 'w') as conf:
+    open(configPath, 'x').close()
+    with open(configPath, 'w') as conf:
         conf.write(json.dumps(defaults))
 
 
 def getconfig():
-    if not exists('./config.json'):
+    if not exists(configPath):
         return {}
-    with open('config.json', 'r') as conf:
-        return json.loads(conf.read())
-
+    with open(configPath, 'r') as conf:
+        try:
+            return json.loads(conf.read())
+        except json.JSONDecodeError:
+            conf.close()
+            print("Config Seems to be empty, deleting and creating new")
+            delconfig()
+            initconfig()
+            return {}
 
 def delconfig():
-    print(f'Deleting config.json at {os.path.curdir}/config.json')
-    os.remove(os.path.curdir + '/config.json')
+    print(f'Deleting config.json at {configPath}')
+    os.remove(configPath)
 
 
 def getoption(option):
@@ -37,5 +46,5 @@ def setoption(option, value):
 
     config[option] = value
 
-    with open('config.json', 'w') as conf:
+    with open(configPath, 'w') as conf:
         conf.write(json.dumps(config))
